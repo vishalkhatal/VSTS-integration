@@ -6,11 +6,16 @@ using System.Threading.Tasks;
 
 namespace integration_with_vsts
 {
-    class Program
+    class VSTS
     {
         static void Main(string[] args)
+        {
+           GetWorkItem();
+        }
+        public static void GetWorkItem()
         {
 
         }
     }
+    
 }
