@@ -15,10 +15,11 @@ namespace integration_with_vsts
     {
         static void Main(string[] args)
         {
+            RunGetBugsQueryUsingClientLib();
             GetProjects();
             GetWorkItem();
-
         }
+
         public static async void GetWorkItem()
         {
             try
@@ -55,7 +56,7 @@ namespace integration_with_vsts
         {
             try
             {
-                var personalaccesstoken = "Its my Personal";
+                var personalaccesstoken = "oqrryl7tr2c73fobfq7b72sxpacfq452fxppfmepg5kcdalp4ata";
 
                 using (HttpClient client = new HttpClient())
                 {
@@ -82,34 +83,13 @@ namespace integration_with_vsts
             }
         }
 
-    }
-    public class ExecuteQuery
-    {
-        readonly string _uri;
-        readonly string _personalAccessToken;
-        readonly string _project;
-
-        /// <summary>
-        /// Constructor. Manually set values to match your account.
-        /// </summary>
-        public ExecuteQuery()
+        public static List<WorkItem> RunGetBugsQueryUsingClientLib()
         {
-            _uri = "https://accountname.visualstudio.com";
-            _personalAccessToken = "personal access token";
-            _project = "project name";
-        }
+            Uri uri = new Uri("https://vso-lis.visualstudio.com");
+            string personalAccessToken = "oqrryl7tr2c73fobfq7b72sxpacfq452fxppfmepg5kcdalp4ata";
+            string project = "SDB20";
 
-        /// <summary>
-        /// Execute a WIQL query to return a list of bugs using the .NET client library
-        /// </summary>
-        /// <returns>List of Microsoft.TeamFoundation.WorkItemTracking.WebApi.Models.WorkItem</returns>
-        public List<WorkItem> RunGetBugsQueryUsingClientLib()
-        {
-            Uri uri = new Uri(_uri);
-            string personalAccessToken = _personalAccessToken;
-            string project = _project;
-
-            VssBasicCredential credentials = new VssBasicCredential("", _personalAccessToken);
+            VssBasicCredential credentials = new VssBasicCredential("", personalAccessToken);
 
             //create a wiql object and build our query
             Wiql wiql = new Wiql()
@@ -161,6 +141,10 @@ namespace integration_with_vsts
 
                 return null;
             }
+
         }
     }
+
 }
+//install-Package Microsoft.TeamFoundationServer.Client -Version 15.112.1
+//    Install-Package Microsoft.VisualStudio.Services.Client -Version 15.112.1
