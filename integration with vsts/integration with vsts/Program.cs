@@ -16,6 +16,7 @@ namespace integration_with_vsts
     {
         static void Main(string[] args)
         {
+            RunGetBugsQueryUsingBugId();
             RunGetBugsQueryUsingBugTitle();
             QueryForWorkItem();
             RunGetBugsQueryUsingClientLib();
@@ -60,7 +61,7 @@ namespace integration_with_vsts
         {
             try
             {
-                var personalaccesstoken = "oqrryl7tr2c73fobfq7b72sxpacfq452fxppfmepg5kcdalp4ata";
+                var personalaccesstoken = "Its my Personal";
 
                 using (HttpClient client = new HttpClient())
                 {
@@ -90,7 +91,7 @@ namespace integration_with_vsts
         public static List<WorkItem> RunGetBugsQueryUsingClientLib()
         {
             Uri uri = new Uri("https://vso-lis.visualstudio.com");
-            string personalAccessToken = "oqrryl7tr2c73fobfq7b72sxpacfq452fxppfmepg5kcdalp4ata";
+            string personalAccessToken = "Its my Personal";
             string project = "SDB20";
 
             VssBasicCredential credentials = new VssBasicCredential("", personalAccessToken);
@@ -155,7 +156,7 @@ namespace integration_with_vsts
         public static void SampleREST()
         {
             Uri collectionUri = new Uri("https://vso-lis.visualstudio.com");
-            string personalAccessToken = "oqrryl7tr2c73fobfq7b72sxpacfq452fxppfmepg5kcdalp4ata";
+            string personalAccessToken = "Its my Personal";
             string teamProjectName = "SDB20";
             // Create a connection object, which we will use to get httpclient objects.  This is more robust
             // then newing up httpclient objects directly.  Be sure to send in the full collection uri.
@@ -230,7 +231,7 @@ namespace integration_with_vsts
         {
             try
             {
-                var personalaccesstoken = "oqrryl7tr2c73fobfq7b72sxpacfq452fxppfmepg5kcdalp4ata";
+                string personalAccessToken = "Its my Personal";
 
                 using (HttpClient client = new HttpClient())
                 {
@@ -240,7 +241,7 @@ namespace integration_with_vsts
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic",
                         Convert.ToBase64String(
                             System.Text.ASCIIEncoding.ASCII.GetBytes(
-                                string.Format("{0}:{1}", "", personalaccesstoken))));
+                                string.Format("{0}:{1}", "", personalAccessToken))));
 
                     using (HttpResponseMessage response = client.GetAsync(
                                 "https://vso-lis.visualstudio.com/SDB20/_apis/wit/queries?$filter=ReadAsync&$top=10&$expand=all&$includeDeleted=true&api-version=4.1").Result)
@@ -261,9 +262,8 @@ namespace integration_with_vsts
         {
             try
             {
-                var personalaccesstoken = "oqrryl7tr2c73fobfq7b72sxpacfq452fxppfmepg5kcdalp4ata";
                 Uri uri = new Uri("https://vso-lis.visualstudio.com");
-                string personalAccessToken = "oqrryl7tr2c73fobfq7b72sxpacfq452fxppfmepg5kcdalp4ata";
+                string personalAccessToken = "Its my Personal";
                 string project = "SDB20";
 
                 VssBasicCredential credentials = new VssBasicCredential("", personalAccessToken);
@@ -289,7 +289,7 @@ namespace integration_with_vsts
         public static List<WorkItem> RunGetBugsQueryUsingBugTitle()
         {
             Uri uri = new Uri("https://vso-lis.visualstudio.com");
-            string personalAccessToken = "oqrryl7tr2c73fobfq7b72sxpacfq452fxppfmepg5kcdalp4ata";
+            string personalAccessToken = "Its my Personal";
             string project = "SDB20";
 
             VssBasicCredential credentials = new VssBasicCredential("", personalAccessToken);
@@ -301,6 +301,70 @@ namespace integration_with_vsts
                         "From WorkItems " +
                         "Where [System.TeamProject] = '" + project + "' " +
                         "And [System.Title] contains 'ReadAsync' " +
+                        "And [System.State] <> 'Closed' " +
+                        "Order By [State] Asc, [Changed Date] Desc"
+            };
+
+            //create instance of work item tracking http client
+            using (WorkItemTrackingHttpClient workItemTrackingHttpClient = new WorkItemTrackingHttpClient(uri, credentials))
+            {
+                //execute the query to get the list of work items in the results
+                WorkItemQueryResult workItemQueryResult = workItemTrackingHttpClient.QueryByWiqlAsync(wiql).Result;
+
+                //some error handling                
+                if (workItemQueryResult.WorkItems.Count() != 0)
+                {
+                    //need to get the list of our work item ids and put them into an array
+                    List<int> list = new List<int>();
+                    int counter = 0;
+                    foreach (var item in workItemQueryResult.WorkItems)
+                    {
+                        if (counter > 150)
+                            break;
+                        list.Add(item.Id);
+                        counter++;
+                    }
+                    int[] arr = list.ToArray();
+
+                    //build a list of the fields we want to see
+                    string[] fields = new string[3];
+                    fields[0] = "System.Id";
+                    fields[1] = "System.Title";
+                    fields[2] = "System.State";
+
+                    //get work items for the ids found in query
+                    var workItems = workItemTrackingHttpClient.GetWorkItemsAsync(arr, fields, workItemQueryResult.AsOf).Result;
+
+                    Console.WriteLine("Query Results: {0} items found", workItems.Count);
+
+                    //loop though work items and write to console
+                    foreach (var workItem in workItems)
+                    {
+                        Console.WriteLine("{0}          {1}                     {2}", workItem.Id, workItem.Fields["System.Title"], workItem.Fields["System.State"]);
+                    }
+
+                    return workItems;
+                }
+
+                return null;
+            }
+
+        }
+        public static List<WorkItem> RunGetBugsQueryUsingBugId()
+        {
+            Uri uri = new Uri("https://vso-lis.visualstudio.com");
+            string personalAccessToken = "Its my Personal";
+            string project = "SDB20";
+
+            VssBasicCredential credentials = new VssBasicCredential("", personalAccessToken);
+
+            //create a wiql object and build our query
+            Wiql wiql = new Wiql()
+            {
+                Query = "Select [State], [Title] " +
+                        "From WorkItems " +
+                        "Where [System.TeamProject] = '" + project + "' " +
+                        "And [System.Id] = '11837' " +
                         "And [System.State] <> 'Closed' " +
                         "Order By [State] Asc, [Changed Date] Desc"
             };
